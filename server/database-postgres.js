@@ -48,14 +48,15 @@ const initialize = async () => {
         id TEXT PRIMARY KEY,
         student_id TEXT NOT NULL,
         class_id TEXT NOT NULL,
-        attendance_date DATE NOT NULL,
+        date DATE NOT NULL,
+        time_in TIMESTAMP,
         status TEXT NOT NULL,
         notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (student_id) REFERENCES students(id),
         FOREIGN KEY (class_id) REFERENCES classes(id),
-        UNIQUE(student_id, class_id, attendance_date)
+        UNIQUE(student_id, class_id, date)
       )
     `);
 
@@ -75,6 +76,32 @@ const initialize = async () => {
         FOREIGN KEY (student_id) REFERENCES students(id),
         FOREIGN KEY (class_id) REFERENCES classes(id),
         UNIQUE(student_id, class_id)
+      )
+    `);
+
+    // Users table
+    await query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        username TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'staff',
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // User sessions table
+    await query(`
+      CREATE TABLE IF NOT EXISTS user_sessions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        token TEXT UNIQUE NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
       )
     `);
 

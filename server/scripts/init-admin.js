@@ -1,7 +1,8 @@
 // Script to initialize first admin user
+require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+const db = process.env.DATABASE_URL ? require('../database-postgres') : require('../database');
 
 const initializeAdmin = async () => {
   try {
