@@ -1,0 +1,17 @@
+node_modules/
+.env
+.env.local
+dist/
+build/
+*.log
+.DS_Store
+data/
+client/node_modules/
+client/build/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local Netlify folder
+.netlify

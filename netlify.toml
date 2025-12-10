@@ -1,0 +1,31 @@
+# Netlify Configuration
+
+[build]
+  # Build command - installs dependencies and builds frontend
+  command = "npm install && cd client && npm install && npm run build && cd .."
+  # Directory to deploy
+  publish = "client/build"
+  # Functions directory for serverless backend
+  functions = "server"
+
+[dev]
+  # Local development command
+  command = "npm run dev"
+  port = 3000
+
+# Environment variables
+[build.environment]
+  NODE_VERSION = "18.0.0"
+  NODE_ENV = "production"
+
+# Redirects for SPA routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# API proxy for backend
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
