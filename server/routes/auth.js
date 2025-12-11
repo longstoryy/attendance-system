@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+const db = process.env.DATABASE_URL ? require('../database-postgres') : require('../database');
 const { generateToken, authenticate } = require('../middleware/auth');
 
 const router = express.Router();

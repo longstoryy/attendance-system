@@ -1,6 +1,6 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+const db = process.env.DATABASE_URL ? require('../database-postgres') : require('../database');
 
 const router = express.Router();
 
