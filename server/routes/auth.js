@@ -119,4 +119,37 @@ router.post('/refresh', authenticate, async (req, res) => {
   }
 });
 
+// Initialize admin user (one-time setup endpoint)
+router.post('/init-admin', async (req, res) => {
+  try {
+    // Check if admin already exists
+    const existingAdmin = await db.get('SELECT id FROM users WHERE role = ?', ['admin']);
+
+    if (existingAdmin) {
+      return res.status(400).json({ error: 'Admin user already exists' });
+    }
+
+    // Create default admin user
+    const adminId = uuidv4();
+    const adminEmail = 'admin@attendance.local';
+    const adminPassword = 'Admin@123456';
+    const passwordHash = await bcrypt.hash(adminPassword, 10);
+
+    await db.run(
+      'INSERT INTO users (id, username, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, ?, ?)',
+      [adminId, 'admin', adminEmail, passwordHash, 'admin', 1]
+    );
+
+    res.json({
+      success: true,
+      message: 'Admin user created successfully',
+      email: adminEmail,
+      password: adminPassword
+    });
+  } catch (err) {
+    console.error('Admin initialization error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
