@@ -12,6 +12,10 @@ import Reports from './pages/Reports';
 import Users from './pages/Users';
 import Scanner from './pages/Scanner';
 
+// Set API base URL
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+axios.defaults.baseURL = API_URL;
+
 function App() {
   const [apiHealth, setApiHealth] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -26,8 +30,8 @@ function App() {
 
     const checkHealth = async () => {
       try {
-        const response = await fetch('/api/health');
-        setApiHealth(response.ok);
+        const response = await axios.get('/api/health');
+        setApiHealth(response.status === 200);
       } catch (err) {
         console.error('API health check failed:', err);
         setApiHealth(false);
