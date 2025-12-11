@@ -18,6 +18,7 @@
   NODE_VERSION = "18.0.0"
   NODE_ENV = "production"
   NPM_FLAGS = "--include=dev"
+  CI = "false"
 
 # Redirects for SPA routing
 [[redirects]]
