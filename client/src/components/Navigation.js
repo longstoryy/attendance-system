@@ -7,7 +7,7 @@ function Navigation({ apiHealth }) {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   React.useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -66,51 +66,59 @@ function Navigation({ apiHealth }) {
               </Link>
             ))}
 
-            {user && user.role === 'admin' && (
-              <div className="relative group">
-                <button
-                  onClick={() => setAdminDropdownOpen(!adminDropdownOpen)}
-                  className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition text-sm rounded-lg"
-                >
-                  <Settings className="w-4 h-4" />
-                  <span className="hidden lg:inline">Admin</span>
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-                
-                <div className="absolute right-0 mt-0 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                  {adminNavLinks.map(({ to, icon: Icon, label }) => (
-                    <Link
-                      key={to}
-                      to={to}
-                      className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition first:rounded-t-lg last:rounded-b-lg border-b border-gray-100 last:border-b-0"
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span>{label}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* User Profile Dropdown */}
+            <div className="relative group ml-auto">
+              <button
+                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition text-sm rounded-lg"
+              >
+                <User className="w-4 h-4" />
+                <span className="hidden lg:inline text-sm">{user?.email || 'Account'}</span>
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              
+              <div className="absolute right-0 mt-0 w-56 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                {/* User Info Section */}
+                {user && (
+                  <>
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Account</p>
+                      <p className="text-sm font-medium text-gray-900 mt-1">{user.email}</p>
+                      <span className="inline-block text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded mt-2">
+                        {user.role}
+                      </span>
+                    </div>
 
-            <div className="flex items-center gap-2 lg:gap-3 ml-auto pl-4 border-l border-gray-200">
-              {user && (
-                <div className="flex items-center gap-2">
-                  <div className="hidden lg:flex items-center gap-2">
-                    <User className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm text-gray-700">{user.email}</span>
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                      {user.role}
-                    </span>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-red-600 hover:bg-red-50 transition rounded-lg"
-                    title="Logout"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
+                    {/* Admin Tools Section */}
+                    {user.role === 'admin' && (
+                      <>
+                        <div className="px-4 py-2 border-b border-gray-100">
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">Admin Tools</p>
+                        </div>
+                        {adminNavLinks.map(({ to, icon: Icon, label }) => (
+                          <Link
+                            key={to}
+                            to={to}
+                            className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-100 last:border-b-0"
+                          >
+                            <Icon className="w-4 h-4" />
+                            <span>{label}</span>
+                          </Link>
+                        ))}
+                      </>
+                    )}
+
+                    {/* Logout Section */}
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition rounded-b-lg"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Logout</span>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
@@ -138,60 +146,66 @@ function Navigation({ apiHealth }) {
               </Link>
             ))}
 
-            {user && user.role === 'admin' && (
-              <>
-                <button
-                  onClick={() => setAdminDropdownOpen(!adminDropdownOpen)}
-                  className="w-full flex items-center justify-between px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition rounded"
-                >
-                  <div className="flex items-center gap-3">
-                    <Settings className="w-5 h-5" />
-                    <span>Admin Tools</span>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${adminDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {adminDropdownOpen && (
-                  <div className="bg-blue-50 rounded space-y-1 ml-4">
-                    {adminNavLinks.map(({ to, icon: Icon, label }) => (
-                      <Link
-                        key={to}
-                        to={to}
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          setAdminDropdownOpen(false);
-                        }}
-                        className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-blue-100 hover:text-blue-600 transition rounded"
-                      >
-                        <Icon className="w-5 h-5" />
-                        <span>{label}</span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-
-            <div className="px-4 py-2 border-t border-gray-200 mt-2 pt-2">
+            {/* Mobile User Profile Section */}
+            <div className="border-t border-gray-200 mt-2 pt-2">
               {user && (
-                <div className="flex items-center gap-2 mb-3">
-                  <User className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm text-gray-700">{user.email}</span>
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                    {user.role}
-                  </span>
-                </div>
+                <>
+                  <div className="px-4 py-3 bg-blue-50 rounded">
+                    <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Account</p>
+                    <p className="text-sm font-medium text-gray-900">{user.email}</p>
+                    <span className="inline-block text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded mt-2">
+                      {user.role}
+                    </span>
+                  </div>
+
+                  {/* Mobile Admin Tools */}
+                  {user.role === 'admin' && (
+                    <>
+                      <button
+                        onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                        className="w-full flex items-center justify-between px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition rounded mt-2"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Settings className="w-5 h-5" />
+                          <span>Admin Tools</span>
+                        </div>
+                        <ChevronDown className={`w-4 h-4 transition-transform ${userDropdownOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                      
+                      {userDropdownOpen && (
+                        <div className="bg-blue-50 rounded space-y-1 ml-4 mt-1">
+                          {adminNavLinks.map(({ to, icon: Icon, label }) => (
+                            <Link
+                              key={to}
+                              to={to}
+                              onClick={() => {
+                                setMobileMenuOpen(false);
+                                setUserDropdownOpen(false);
+                              }}
+                              className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-blue-100 hover:text-blue-600 transition rounded"
+                            >
+                              <Icon className="w-5 h-5" />
+                              <span>{label}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Logout Button */}
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 transition rounded mt-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Logout</span>
+                  </button>
+                </>
               )}
-              <button
-                onClick={() => {
-                  handleLogout();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 transition rounded"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </button>
             </div>
           </div>
         )}
