@@ -43,6 +43,18 @@ const initialize = async () => {
       )
     `);
 
+    // Add capacity column if it doesn't exist (migration for existing databases)
+    try {
+      await query(`
+        ALTER TABLE classes ADD COLUMN capacity INT;
+      `);
+    } catch (err) {
+      // Column already exists, ignore error
+      if (!err.message.includes('already exists')) {
+        console.warn('Warning adding capacity column:', err.message);
+      }
+    }
+
     // Attendance table
     await query(`
       CREATE TABLE IF NOT EXISTS attendance (
