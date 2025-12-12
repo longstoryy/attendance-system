@@ -146,6 +146,267 @@ CREATE TABLE user_sessions (
 
 ---
 
+## Phase 3A: Advanced Attendance Status System (Q1 2025)
+**Estimated Duration**: 3-4 weeks
+**Priority**: High
+**Status**: 🚀 IN PROGRESS
+
+### Features to Implement
+- [x] Automated attendance status detection
+  - Auto-detect late arrivals based on class start time
+  - Auto-mark absent when class ends (no QR scan)
+  - Auto-mark present for on-time arrivals
+  - Time-based calculations (minutes late)
+
+- [x] Student-driven reason submission
+  - Late arrival reason popup (auto-filled times)
+  - Absence appeal form (with categories)
+  - Optional supporting documents/proof upload
+  - Real-time notifications to students
+
+- [x] Instructor approval workflow
+  - Pending approvals dashboard
+  - Review late reasons
+  - Review absence appeals
+  - Approve/reject with notes
+  - Audit trail of all decisions
+
+- [x] Real-time notification system
+  - Late arrival alerts to students
+  - Absence notifications (at class end)
+  - Approval status notifications
+  - Instructor notifications for pending reviews
+
+- [x] Enhanced attendance records
+  - Status types: present, late, absent, excused, early_departure, medical
+  - Minutes late tracking
+  - Reason categories and notes
+  - Approval status and timestamps
+  - Document storage for proof
+
+### Database Changes
+```sql
+-- Enhanced attendance table
+ALTER TABLE attendance ADD COLUMN (
+  minutes_late INT,
+  reason TEXT,
+  notes TEXT,
+  requires_approval BOOLEAN DEFAULT FALSE,
+  approved_by UUID REFERENCES users(id),
+  approved_at TIMESTAMP,
+  document_url VARCHAR(255)
+);
+
+-- New tables
+CREATE TABLE attendance_appeals (
+  id UUID PRIMARY KEY,
+  attendance_id UUID REFERENCES attendance(id),
+  student_id UUID REFERENCES students(id),
+  appeal_type VARCHAR(20),      -- 'late_reason', 'absence_appeal'
+  reason TEXT,
+  reason_category VARCHAR(50),  -- 'traffic', 'sick', 'emergency', etc.
+  additional_notes TEXT,
+  proof_document_url VARCHAR(255),
+  status VARCHAR(20),           -- 'pending', 'approved', 'rejected'
+  reviewed_by UUID REFERENCES users(id),
+  reviewed_at TIMESTAMP,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
+);
+
+CREATE TABLE notifications (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES users(id),
+  type VARCHAR(50),
+  title VARCHAR(200),
+  message TEXT,
+  related_attendance_id UUID REFERENCES attendance(id),
+  read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP
+);
+```
+
+### API Endpoints
+- `POST /api/attendance/mark-qr` - Mark attendance via QR scan with auto-detection
+- `POST /api/attendance/:id/submit-reason` - Student submits late reason
+- `POST /api/attendance/:id/appeal-absence` - Student appeals absence
+- `GET /api/attendance/pending-approvals` - Get pending approvals for instructor
+- `POST /api/attendance/:id/review-appeal` - Instructor approves/rejects appeal
+- `POST /api/attendance/auto-mark-absent` - Scheduled task to mark absent
+- `GET /api/notifications` - Get user notifications
+
+### Frontend Components
+- Late Arrival Popup (auto-filled times, reason input)
+- Absence Appeal Form (reason category, notes, proof upload)
+- Instructor Approval Dashboard (pending reviews, approve/reject)
+- Student Notifications Center (real-time alerts)
+- Enhanced Attendance Reports (status breakdown, heatmap view)
+
+### Implementation Steps
+1. Update database schema with new tables and columns
+2. Create backend auto-detection logic (time-based status)
+3. Create scheduled task for class-end auto-marking
+4. Build notification system (in-app alerts)
+5. Create late reason submission endpoint
+6. Create absence appeal endpoint
+7. Build instructor approval dashboard
+8. Create student notification UI
+9. Update attendance reports with new statuses
+10. Comprehensive testing and debugging
+
+### Key Features
+✅ Fully Automated - No staff input needed for marking
+✅ Smart Time Detection - Auto-calculates late/present/absent
+✅ Student-Driven - Students provide reasons, not staff
+✅ Approval Workflow - Instructors review and approve/reject
+✅ Real-time Notifications - Instant alerts to students
+✅ Appeal System - Students can contest absences
+✅ Audit Trail - All changes logged
+✅ Zero Manual Entry - Completely automated
+
+### Effort Breakdown
+| Task | Hours |
+|------|-------|
+| Database schema | 1 |
+| Backend auto-detection | 2 |
+| Backend class-end marking | 2 |
+| Backend approval endpoints | 2 |
+| Notification system | 2 |
+| Frontend late popup | 2 |
+| Frontend absence appeal | 2 |
+| Frontend instructor dashboard | 2 |
+| Testing & debugging | 2 |
+| **Total** | **17 hours** |
+
+---
+
+## Phase 3B: Gamification & Student Engagement (Q1-Q2 2025)
+**Estimated Duration**: 4-5 weeks
+**Priority**: High
+**Status**: ⏳ Planned
+
+### Features to Implement
+- [ ] Achievement badges system
+  - Early Bird (arrive 10+ min early, 5 times)
+  - Punctual Hero (100% on-time attendance, 1 month)
+  - Never Missed (perfect attendance, semester)
+  - Most Improved (biggest improvement in punctuality)
+  - Weekly Top 3 (top 3 punctual students weekly)
+
+- [ ] Attendance streaks
+  - Track consecutive days present
+  - Track consecutive days on-time
+  - Track consecutive days early
+  - Visual streak indicators
+  - Streak reset notifications
+
+- [ ] Weekly leaderboard ranking
+  - Rank by punctuality percentage
+  - Rank by earliest arrival time
+  - Rank by consecutive on-time days
+  - Auto-update every week
+  - Show top 10 students
+
+- [ ] Student avatars & levels
+  - Student chooses avatar on signup
+  - Avatar levels up as they improve
+  - Unlock new outfits/badges at milestones
+  - Visual progress indicators
+  - Level system (Beginner → Legend)
+
+### Database Changes
+```sql
+CREATE TABLE student_badges (
+  id UUID PRIMARY KEY,
+  student_id UUID REFERENCES students(id),
+  badge_name VARCHAR(50),
+  earned_at TIMESTAMP,
+  UNIQUE(student_id, badge_name)
+);
+
+CREATE TABLE attendance_streaks (
+  id UUID PRIMARY KEY,
+  student_id UUID REFERENCES students(id),
+  streak_type VARCHAR(20),
+  current_streak INT,
+  best_streak INT,
+  last_updated TIMESTAMP
+);
+
+CREATE TABLE leaderboard (
+  id UUID PRIMARY KEY,
+  week_start DATE,
+  student_id UUID REFERENCES students(id),
+  rank INT,
+  punctuality_score DECIMAL(5,2),
+  streak INT,
+  badges_earned INT
+);
+
+CREATE TABLE student_avatars (
+  id UUID PRIMARY KEY,
+  student_id UUID REFERENCES students(id),
+  avatar_type VARCHAR(50),
+  level INT DEFAULT 1,
+  experience_points INT DEFAULT 0,
+  created_at TIMESTAMP
+);
+```
+
+### Effort Breakdown
+| Task | Hours |
+|------|-------|
+| Badge system | 3 |
+| Streak tracking | 2 |
+| Leaderboard logic | 2 |
+| Avatar system | 3 |
+| Frontend gamification UI | 4 |
+| Testing | 2 |
+| **Total** | **16 hours** |
+
+---
+
+## Phase 3C: Teacher Analytics Dashboard (Q2 2025)
+**Estimated Duration**: 3-4 weeks
+**Priority**: High
+**Status**: ⏳ Planned
+
+### Features to Implement
+- [ ] Class-level analytics
+  - Average attendance rate
+  - Punctuality trends
+  - Most absent students
+  - Class performance graph
+
+- [ ] Student-level analytics
+  - Individual attendance timeline
+  - Late arrival patterns
+  - Absence reasons breakdown
+  - Improvement trends
+
+- [ ] Heatmap view
+  - Color-coded calendar (Green/Yellow/Red)
+  - Month/semester view
+  - Export as image
+
+- [ ] Predictive insights
+  - Students at risk of dropout
+  - Attendance trend predictions
+  - Recommended interventions
+
+### Effort Breakdown
+| Task | Hours |
+|------|-------|
+| Analytics logic | 3 |
+| Charts & visualizations | 3 |
+| Heatmap generation | 2 |
+| Predictive algorithms | 2 |
+| Frontend dashboard | 3 |
+| Testing | 2 |
+| **Total** | **15 hours** |
+
+---
+
 ## Phase 3: NFC & Advanced Biometrics (Q2-Q3 2025)
 **Estimated Duration**: 8-10 weeks
 **Priority**: High
@@ -591,13 +852,23 @@ CREATE TABLE user_sessions (
 
 ```
 2024 Q4: MVP ✅
-2025 Q1: Auth & RBAC
-2025 Q2: Mobile & Analytics
-2025 Q3: Notifications & Optimization
-2025 Q4: Batch Operations & Integration
-2026 Q1: Security & DevOps
-2026 Q2: Localization & Advanced Features
-2026 Q3: Maintenance & Optimization
+2024 Q4: Auth & RBAC ✅
+2024 Q4: QR Code Scanning ✅
+2024 Q4: Bulk Import ✅
+2025 Q1: Advanced Attendance Status 🚀 (IN PROGRESS)
+2025 Q1: Gamification & Student Engagement ⏳
+2025 Q2: Teacher Analytics Dashboard ⏳
+2025 Q2-Q3: NFC & Advanced Biometrics
+2025 Q3-Q4: Comprehensive Analytics & Reporting
+2025 Q4: Integration with School Management Systems
+2026 Q1: Notifications & Alerts
+2026 Q1: Database Optimization & Scaling
+2026 Q2: Batch Operations & Import/Export
+2026 Q2: API Documentation & Third-party Integrations
+2026 Q1: Security & Compliance
+2026 Q1: Deployment & DevOps
+2026 Q2: Multi-language & Localization
+2026 Q2-Q3: Advanced Features & Maintenance
 ```
 
 ---
@@ -615,5 +886,30 @@ Regular reviews (quarterly) will ensure alignment with business goals.
 
 ---
 
-**Last Updated**: December 2024
-**Next Review**: March 2025
+**Last Updated**: December 12, 2025
+**Next Review**: January 2026
+
+---
+
+## Recent Updates (December 12, 2025)
+
+### Phase 3A: Advanced Attendance Status System - ADDED
+- Fully automated attendance status detection
+- Student-driven reason submission for late arrivals
+- Instructor approval workflow for appeals
+- Real-time notification system
+- Enhanced attendance records with multiple status types
+- Estimated effort: 17 hours
+
+### Phase 3B: Gamification & Student Engagement - ADDED
+- Achievement badges system
+- Attendance streaks tracking
+- Weekly leaderboard ranking
+- Student avatars & levels system
+- Estimated effort: 16 hours
+
+### Phase 3C: Teacher Analytics Dashboard - ADDED
+- Class-level and student-level analytics
+- Heatmap view for attendance patterns
+- Predictive insights for at-risk students
+- Estimated effort: 15 hours
