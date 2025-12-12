@@ -10,6 +10,7 @@ router.get('/', async (req, res) => {
     const classes = await db.all('SELECT * FROM classes ORDER BY name');
     res.json(classes);
   } catch (err) {
+    console.error('Error fetching classes:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -17,12 +18,21 @@ router.get('/', async (req, res) => {
 // Get class by ID
 router.get('/:id', async (req, res) => {
   try {
-    const classData = await db.get('SELECT * FROM classes WHERE id = ?', [req.params.id]);
-    if (!classData) {
-      return res.status(404).json({ error: 'Class not found' });
+    if (process.env.DATABASE_URL) {
+      const classData = await db.get('SELECT * FROM classes WHERE id = $1', [req.params.id]);
+      if (!classData) {
+        return res.status(404).json({ error: 'Class not found' });
+      }
+      res.json(classData);
+    } else {
+      const classData = await db.get('SELECT * FROM classes WHERE id = ?', [req.params.id]);
+      if (!classData) {
+        return res.status(404).json({ error: 'Class not found' });
+      }
+      res.json(classData);
     }
-    res.json(classData);
   } catch (err) {
+    console.error('Error fetching class:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -37,14 +47,24 @@ router.post('/', async (req, res) => {
     }
 
     const id = uuidv4();
-    await db.run(
-      'INSERT INTO classes (id, name, code, instructor, schedule, capacity) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, name, code, instructor, schedule, capacity]
-    );
-
-    const classData = await db.get('SELECT * FROM classes WHERE id = ?', [id]);
-    res.status(201).json(classData);
+    
+    if (process.env.DATABASE_URL) {
+      await db.run(
+        'INSERT INTO classes (id, name, code, instructor, schedule, capacity) VALUES ($1, $2, $3, $4, $5, $6)',
+        [id, name, code, instructor, schedule, capacity]
+      );
+      const classData = await db.get('SELECT * FROM classes WHERE id = $1', [id]);
+      res.status(201).json(classData);
+    } else {
+      await db.run(
+        'INSERT INTO classes (id, name, code, instructor, schedule, capacity) VALUES (?, ?, ?, ?, ?, ?)',
+        [id, name, code, instructor, schedule, capacity]
+      );
+      const classData = await db.get('SELECT * FROM classes WHERE id = ?', [id]);
+      res.status(201).json(classData);
+    }
   } catch (err) {
+    console.error('Error creating class:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -55,14 +75,23 @@ router.put('/:id', async (req, res) => {
     const { name, code, instructor, schedule, capacity } = req.body;
     const id = req.params.id;
 
-    await db.run(
-      'UPDATE classes SET name = ?, code = ?, instructor = ?, schedule = ?, capacity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [name, code, instructor, schedule, capacity, id]
-    );
-
-    const classData = await db.get('SELECT * FROM classes WHERE id = ?', [id]);
-    res.json(classData);
+    if (process.env.DATABASE_URL) {
+      await db.run(
+        'UPDATE classes SET name = $1, code = $2, instructor = $3, schedule = $4, capacity = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6',
+        [name, code, instructor, schedule, capacity, id]
+      );
+      const classData = await db.get('SELECT * FROM classes WHERE id = $1', [id]);
+      res.json(classData);
+    } else {
+      await db.run(
+        'UPDATE classes SET name = ?, code = ?, instructor = ?, schedule = ?, capacity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [name, code, instructor, schedule, capacity, id]
+      );
+      const classData = await db.get('SELECT * FROM classes WHERE id = ?', [id]);
+      res.json(classData);
+    }
   } catch (err) {
+    console.error('Error updating class:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -70,9 +99,14 @@ router.put('/:id', async (req, res) => {
 // Delete class
 router.delete('/:id', async (req, res) => {
   try {
-    await db.run('DELETE FROM classes WHERE id = ?', [req.params.id]);
+    if (process.env.DATABASE_URL) {
+      await db.run('DELETE FROM classes WHERE id = $1', [req.params.id]);
+    } else {
+      await db.run('DELETE FROM classes WHERE id = ?', [req.params.id]);
+    }
     res.json({ message: 'Class deleted' });
   } catch (err) {
+    console.error('Error deleting class:', err);
     res.status(500).json({ error: err.message });
   }
 });
