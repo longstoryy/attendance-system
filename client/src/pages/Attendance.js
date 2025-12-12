@@ -304,7 +304,11 @@ function Attendance() {
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {getClassName(record.class_id)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{record.date}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {record.date
+                        ? format(new Date(record.date), 'MM/dd/yyyy')
+                        : '-'}
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {record.time_in
                         ? format(new Date(record.time_in), 'HH:mm:ss')
