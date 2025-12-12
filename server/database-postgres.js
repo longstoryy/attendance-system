@@ -37,6 +37,7 @@ const initialize = async () => {
         code TEXT UNIQUE NOT NULL,
         instructor TEXT,
         schedule TEXT,
+        capacity INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
