@@ -29,6 +29,9 @@ function Login() {
       // Set default authorization header
       axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
 
+      // Dispatch custom event to notify App of authentication change
+      window.dispatchEvent(new Event('authChange'));
+
       // Redirect to dashboard
       navigate('/');
     } catch (err) {
