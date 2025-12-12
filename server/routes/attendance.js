@@ -24,11 +24,24 @@ router.post('/mark', async (req, res) => {
         if (!student) {
           console.log(`Student ${student_id} not found, creating...`);
           const newStudentId = uuidv4();
-          await db.run(
-            'INSERT INTO students (id, name, student_id, qr_code) VALUES ($1, $2, $3, $4)',
-            [newStudentId, `Student ${student_id}`, student_id, student_id]
-          );
-          student = { id: newStudentId };
+          try {
+            await db.run(
+              'INSERT INTO students (id, name, student_id, qr_code) VALUES ($1, $2, $3, $4)',
+              [newStudentId, `Student ${student_id}`, student_id, student_id]
+            );
+            console.log(`Student ${student_id} created successfully with id ${newStudentId}`);
+            student = { id: newStudentId };
+          } catch (createErr) {
+            console.error(`Failed to create student ${student_id}:`, createErr.message);
+            // If student creation fails, try to fetch it again in case it was created by another request
+            student = await db.get('SELECT id FROM students WHERE student_id = $1', [student_id]);
+            if (!student) {
+              throw createErr;
+            }
+            console.log(`Student ${student_id} found after creation attempt`);
+          }
+        } else {
+          console.log(`Student ${student_id} found in database`);
         }
       } else {
         student = await db.get('SELECT id FROM students WHERE student_id = ?', [student_id]);
@@ -36,11 +49,24 @@ router.post('/mark', async (req, res) => {
         if (!student) {
           console.log(`Student ${student_id} not found, creating...`);
           const newStudentId = uuidv4();
-          await db.run(
-            'INSERT INTO students (id, name, student_id, qr_code) VALUES (?, ?, ?, ?)',
-            [newStudentId, `Student ${student_id}`, student_id, student_id]
-          );
-          student = { id: newStudentId };
+          try {
+            await db.run(
+              'INSERT INTO students (id, name, student_id, qr_code) VALUES (?, ?, ?, ?)',
+              [newStudentId, `Student ${student_id}`, student_id, student_id]
+            );
+            console.log(`Student ${student_id} created successfully with id ${newStudentId}`);
+            student = { id: newStudentId };
+          } catch (createErr) {
+            console.error(`Failed to create student ${student_id}:`, createErr.message);
+            // If student creation fails, try to fetch it again in case it was created by another request
+            student = await db.get('SELECT id FROM students WHERE student_id = ?', [student_id]);
+            if (!student) {
+              throw createErr;
+            }
+            console.log(`Student ${student_id} found after creation attempt`);
+          }
+        } else {
+          console.log(`Student ${student_id} found in database`);
         }
       }
 
