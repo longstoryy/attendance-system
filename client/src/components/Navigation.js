@@ -37,6 +37,11 @@ function Navigation({ apiHealth }) {
     { to: '/reports', icon: BarChart3, label: 'Reports' },
   ];
 
+  const adminNavLinks = [
+    { to: '/users', icon: Settings, label: 'Users' },
+    { to: '/bulk-import', icon: Users, label: 'Bulk Import' },
+  ];
+
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -61,13 +66,18 @@ function Navigation({ apiHealth }) {
             ))}
 
             {user && user.role === 'admin' && (
-              <Link
-                to="/users"
-                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition text-sm lg:text-base"
-              >
-                <Settings className="w-4 h-4" />
-                <span className="hidden lg:inline">Users</span>
-              </Link>
+              <>
+                {adminNavLinks.map(({ to, icon: Icon, label }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition text-sm lg:text-base"
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="hidden lg:inline">{label}</span>
+                  </Link>
+                ))}
+              </>
             )}
 
             <div className="flex items-center gap-2 lg:gap-4 pl-4 border-l border-gray-200">
@@ -128,14 +138,19 @@ function Navigation({ apiHealth }) {
             ))}
 
             {user && user.role === 'admin' && (
-              <Link
-                to="/users"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition rounded"
-              >
-                <Settings className="w-5 h-5" />
-                <span>Users</span>
-              </Link>
+              <>
+                {adminNavLinks.map(({ to, icon: Icon, label }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition rounded"
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span>{label}</span>
+                  </Link>
+                ))}
+              </>
             )}
 
             <div className="px-4 py-2 border-t border-gray-200 mt-2 pt-2">

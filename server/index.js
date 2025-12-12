@@ -10,6 +10,7 @@ const attendanceRoutes = require('./routes/attendance');
 const classRoutes = require('./routes/classes');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
+const bulkImportRoutes = require('./routes/bulk-import');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,6 +41,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/classes', classRoutes);
+app.use('/api/import', bulkImportRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

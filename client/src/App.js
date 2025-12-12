@@ -11,6 +11,7 @@ import Attendance from './pages/Attendance';
 import Reports from './pages/Reports';
 import Users from './pages/Users';
 import Scanner from './pages/Scanner';
+import BulkImport from './pages/BulkImport';
 
 // Set API base URL
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -122,6 +123,16 @@ function App() {
               <ProtectedRoute>
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                   <Scanner />
+                </main>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/bulk-import"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                  <BulkImport />
                 </main>
               </ProtectedRoute>
             }
