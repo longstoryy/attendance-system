@@ -63,6 +63,7 @@ const initialize = async () => {
         class_id TEXT NOT NULL,
         date DATE NOT NULL,
         time_in TIMESTAMP,
+        time_out TIMESTAMP,
         status TEXT NOT NULL,
         notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -72,6 +73,18 @@ const initialize = async () => {
         UNIQUE(student_id, class_id, date)
       )
     `);
+
+    // Add time_out column if it doesn't exist (migration for existing databases)
+    try {
+      await query(`
+        ALTER TABLE attendance ADD COLUMN time_out TIMESTAMP;
+      `);
+    } catch (err) {
+      // Column already exists, ignore error
+      if (!err.message.includes('already exists')) {
+        console.warn('Warning adding time_out column:', err.message);
+      }
+    }
 
     // Attendance summary table
     await query(`
