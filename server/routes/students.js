@@ -17,11 +17,19 @@ router.get('/', async (req, res) => {
 // Get student by ID
 router.get('/:id', async (req, res) => {
   try {
-    const student = await db.get('SELECT * FROM students WHERE id = ?', [req.params.id]);
-    if (!student) {
-      return res.status(404).json({ error: 'Student not found' });
+    if (process.env.DATABASE_URL) {
+      const student = await db.get('SELECT * FROM students WHERE id = $1', [req.params.id]);
+      if (!student) {
+        return res.status(404).json({ error: 'Student not found' });
+      }
+      res.json(student);
+    } else {
+      const student = await db.get('SELECT * FROM students WHERE id = ?', [req.params.id]);
+      if (!student) {
+        return res.status(404).json({ error: 'Student not found' });
+      }
+      res.json(student);
     }
-    res.json(student);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -37,16 +45,23 @@ router.post('/', async (req, res) => {
     }
 
     const id = uuidv4();
-    // Generate QR code data (use student_id for easy scanning)
     const qr_code = student_id;
     
-    await db.run(
-      'INSERT INTO students (id, name, email, student_id, class_id, qr_code) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, name, email, student_id, class_id, qr_code]
-    );
-
-    const student = await db.get('SELECT * FROM students WHERE id = ?', [id]);
-    res.status(201).json(student);
+    if (process.env.DATABASE_URL) {
+      await db.run(
+        'INSERT INTO students (id, name, email, student_id, class_id, qr_code) VALUES ($1, $2, $3, $4, $5, $6)',
+        [id, name, email, student_id, class_id, qr_code]
+      );
+      const student = await db.get('SELECT * FROM students WHERE id = $1', [id]);
+      res.status(201).json(student);
+    } else {
+      await db.run(
+        'INSERT INTO students (id, name, email, student_id, class_id, qr_code) VALUES (?, ?, ?, ?, ?, ?)',
+        [id, name, email, student_id, class_id, qr_code]
+      );
+      const student = await db.get('SELECT * FROM students WHERE id = ?', [id]);
+      res.status(201).json(student);
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -58,13 +73,21 @@ router.put('/:id', async (req, res) => {
     const { name, email, class_id } = req.body;
     const id = req.params.id;
 
-    await db.run(
-      'UPDATE students SET name = ?, email = ?, class_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [name, email, class_id, id]
-    );
-
-    const student = await db.get('SELECT * FROM students WHERE id = ?', [id]);
-    res.json(student);
+    if (process.env.DATABASE_URL) {
+      await db.run(
+        'UPDATE students SET name = $1, email = $2, class_id = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $4',
+        [name, email, class_id, id]
+      );
+      const student = await db.get('SELECT * FROM students WHERE id = $1', [id]);
+      res.json(student);
+    } else {
+      await db.run(
+        'UPDATE students SET name = ?, email = ?, class_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [name, email, class_id, id]
+      );
+      const student = await db.get('SELECT * FROM students WHERE id = ?', [id]);
+      res.json(student);
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -73,7 +96,11 @@ router.put('/:id', async (req, res) => {
 // Delete student
 router.delete('/:id', async (req, res) => {
   try {
-    await db.run('DELETE FROM students WHERE id = ?', [req.params.id]);
+    if (process.env.DATABASE_URL) {
+      await db.run('DELETE FROM students WHERE id = $1', [req.params.id]);
+    } else {
+      await db.run('DELETE FROM students WHERE id = ?', [req.params.id]);
+    }
     res.json({ message: 'Student deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -83,11 +110,19 @@ router.delete('/:id', async (req, res) => {
 // Get students by class
 router.get('/class/:class_id', async (req, res) => {
   try {
-    const students = await db.all(
-      'SELECT * FROM students WHERE class_id = ? ORDER BY name',
-      [req.params.class_id]
-    );
-    res.json(students);
+    if (process.env.DATABASE_URL) {
+      const students = await db.all(
+        'SELECT * FROM students WHERE class_id = $1 ORDER BY name',
+        [req.params.class_id]
+      );
+      res.json(students);
+    } else {
+      const students = await db.all(
+        'SELECT * FROM students WHERE class_id = ? ORDER BY name',
+        [req.params.class_id]
+      );
+      res.json(students);
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

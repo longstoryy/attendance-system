@@ -29,16 +29,29 @@ router.get('/:id', authenticate, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const user = await db.get(
-      'SELECT id, username, email, role, is_active, created_at FROM users WHERE id = ?',
-      [req.params.id]
-    );
+    if (process.env.DATABASE_URL) {
+      const user = await db.get(
+        'SELECT id, username, email, role, is_active, created_at FROM users WHERE id = $1',
+        [req.params.id]
+      );
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      res.json(user);
+    } else {
+      const user = await db.get(
+        'SELECT id, username, email, role, is_active, created_at FROM users WHERE id = ?',
+        [req.params.id]
+      );
+
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      res.json(user);
     }
-
-    res.json(user);
   } catch (err) {
     console.error('Get user error:', err);
     res.status(500).json({ error: err.message });
@@ -58,21 +71,34 @@ router.post('/', authenticate, isAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Invalid role' });
     }
 
-    // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
-
     const id = uuidv4();
-    await db.run(
-      'INSERT INTO users (id, username, email, password_hash, role) VALUES (?, ?, ?, ?, ?)',
-      [id, username, email, passwordHash, role]
-    );
 
-    const user = await db.get(
-      'SELECT id, username, email, role, is_active, created_at FROM users WHERE id = ?',
-      [id]
-    );
+    if (process.env.DATABASE_URL) {
+      await db.run(
+        'INSERT INTO users (id, username, email, password_hash, role) VALUES ($1, $2, $3, $4, $5)',
+        [id, username, email, passwordHash, role]
+      );
 
-    res.status(201).json(user);
+      const user = await db.get(
+        'SELECT id, username, email, role, is_active, created_at FROM users WHERE id = $1',
+        [id]
+      );
+
+      res.status(201).json(user);
+    } else {
+      await db.run(
+        'INSERT INTO users (id, username, email, password_hash, role) VALUES (?, ?, ?, ?, ?)',
+        [id, username, email, passwordHash, role]
+      );
+
+      const user = await db.get(
+        'SELECT id, username, email, role, is_active, created_at FROM users WHERE id = ?',
+        [id]
+      );
+
+      res.status(201).json(user);
+    }
   } catch (err) {
     console.error('Create user error:', err);
     if (err.message.includes('UNIQUE')) {
@@ -138,12 +164,15 @@ router.put('/:id', authenticate, isAdmin, async (req, res) => {
 // Delete user (admin only)
 router.delete('/:id', authenticate, isAdmin, async (req, res) => {
   try {
-    // Prevent deleting yourself
     if (req.params.id === req.user.userId) {
       return res.status(400).json({ error: 'Cannot delete your own account' });
     }
 
-    await db.run('DELETE FROM users WHERE id = ?', [req.params.id]);
+    if (process.env.DATABASE_URL) {
+      await db.run('DELETE FROM users WHERE id = $1', [req.params.id]);
+    } else {
+      await db.run('DELETE FROM users WHERE id = ?', [req.params.id]);
+    }
 
     res.json({ message: 'User deleted successfully' });
   } catch (err) {
@@ -163,10 +192,17 @@ router.post('/:id/reset-password', authenticate, isAdmin, async (req, res) => {
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
 
-    await db.run(
-      'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [passwordHash, req.params.id]
-    );
+    if (process.env.DATABASE_URL) {
+      await db.run(
+        'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+        [passwordHash, req.params.id]
+      );
+    } else {
+      await db.run(
+        'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [passwordHash, req.params.id]
+      );
+    }
 
     res.json({ message: 'Password reset successfully' });
   } catch (err) {
