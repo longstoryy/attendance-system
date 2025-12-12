@@ -16,7 +16,15 @@ router.post('/login', async (req, res) => {
     }
 
     // Find user by email
-    const user = await db.get('SELECT * FROM users WHERE email = ?', [email]);
+    let user;
+    if (process.env.DATABASE_URL) {
+      // PostgreSQL
+      const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+      user = result.rows[0];
+    } else {
+      // SQLite
+      user = await db.get('SELECT * FROM users WHERE email = ?', [email]);
+    }
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });
@@ -39,10 +47,19 @@ router.post('/login', async (req, res) => {
     const sessionId = uuidv4();
     const expiresAt = new Date(Date.now() + 3600000).toISOString(); // 1 hour
 
-    await db.run(
-      'INSERT INTO user_sessions (id, user_id, token, expires_at) VALUES (?, ?, ?, ?)',
-      [sessionId, user.id, token, expiresAt]
-    );
+    if (process.env.DATABASE_URL) {
+      // PostgreSQL
+      await db.query(
+        'INSERT INTO user_sessions (id, user_id, token, expires_at) VALUES ($1, $2, $3, $4)',
+        [sessionId, user.id, token, expiresAt]
+      );
+    } else {
+      // SQLite
+      await db.run(
+        'INSERT INTO user_sessions (id, user_id, token, expires_at) VALUES (?, ?, ?, ?)',
+        [sessionId, user.id, token, expiresAt]
+      );
+    }
 
     res.json({
       token,
@@ -65,7 +82,13 @@ router.post('/logout', authenticate, async (req, res) => {
     const token = req.headers.authorization?.split(' ')[1];
 
     if (token) {
-      await db.run('DELETE FROM user_sessions WHERE token = ?', [token]);
+      if (process.env.DATABASE_URL) {
+        // PostgreSQL
+        await db.query('DELETE FROM user_sessions WHERE token = $1', [token]);
+      } else {
+        // SQLite
+        await db.run('DELETE FROM user_sessions WHERE token = ?', [token]);
+      }
     }
 
     res.json({ message: 'Logged out successfully' });
@@ -78,7 +101,15 @@ router.post('/logout', authenticate, async (req, res) => {
 // Get current user
 router.get('/me', authenticate, async (req, res) => {
   try {
-    const user = await db.get('SELECT id, email, username, role FROM users WHERE id = ?', [req.user.userId]);
+    let user;
+    if (process.env.DATABASE_URL) {
+      // PostgreSQL
+      const result = await db.query('SELECT id, email, username, role FROM users WHERE id = $1', [req.user.userId]);
+      user = result.rows[0];
+    } else {
+      // SQLite
+      user = await db.get('SELECT id, email, username, role FROM users WHERE id = ?', [req.user.userId]);
+    }
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -94,7 +125,15 @@ router.get('/me', authenticate, async (req, res) => {
 // Refresh token
 router.post('/refresh', authenticate, async (req, res) => {
   try {
-    const user = await db.get('SELECT id, role FROM users WHERE id = ?', [req.user.userId]);
+    let user;
+    if (process.env.DATABASE_URL) {
+      // PostgreSQL
+      const result = await db.query('SELECT id, role FROM users WHERE id = $1', [req.user.userId]);
+      user = result.rows[0];
+    } else {
+      // SQLite
+      user = await db.get('SELECT id, role FROM users WHERE id = ?', [req.user.userId]);
+    }
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -107,10 +146,19 @@ router.post('/refresh', authenticate, async (req, res) => {
     const oldToken = req.headers.authorization?.split(' ')[1];
     const expiresAt = new Date(Date.now() + 3600000).toISOString();
 
-    await db.run(
-      'UPDATE user_sessions SET token = ?, expires_at = ? WHERE token = ?',
-      [newToken, expiresAt, oldToken]
-    );
+    if (process.env.DATABASE_URL) {
+      // PostgreSQL
+      await db.query(
+        'UPDATE user_sessions SET token = $1, expires_at = $2 WHERE token = $3',
+        [newToken, expiresAt, oldToken]
+      );
+    } else {
+      // SQLite
+      await db.run(
+        'UPDATE user_sessions SET token = ?, expires_at = ? WHERE token = ?',
+        [newToken, expiresAt, oldToken]
+      );
+    }
 
     res.json({ token: newToken });
   } catch (err) {
@@ -123,7 +171,15 @@ router.post('/refresh', authenticate, async (req, res) => {
 router.post('/init-admin', async (req, res) => {
   try {
     // Check if admin already exists
-    const existingAdmin = await db.get('SELECT id FROM users WHERE role = ?', ['admin']);
+    let existingAdmin;
+    if (process.env.DATABASE_URL) {
+      // PostgreSQL
+      const result = await db.query('SELECT id FROM users WHERE role = $1', ['admin']);
+      existingAdmin = result.rows[0];
+    } else {
+      // SQLite
+      existingAdmin = await db.get('SELECT id FROM users WHERE role = ?', ['admin']);
+    }
 
     if (existingAdmin) {
       return res.status(400).json({ error: 'Admin user already exists' });
@@ -135,10 +191,19 @@ router.post('/init-admin', async (req, res) => {
     const adminPassword = 'Admin@123456';
     const passwordHash = await bcrypt.hash(adminPassword, 10);
 
-    await db.run(
-      'INSERT INTO users (id, username, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, ?, ?)',
-      [adminId, 'admin', adminEmail, passwordHash, 'admin', 1]
-    );
+    if (process.env.DATABASE_URL) {
+      // PostgreSQL
+      await db.query(
+        'INSERT INTO users (id, username, email, password_hash, role, is_active) VALUES ($1, $2, $3, $4, $5, $6)',
+        [adminId, 'admin', adminEmail, passwordHash, 'admin', true]
+      );
+    } else {
+      // SQLite
+      await db.run(
+        'INSERT INTO users (id, username, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, ?, ?)',
+        [adminId, 'admin', adminEmail, passwordHash, 'admin', 1]
+      );
+    }
 
     res.json({
       success: true,
