@@ -15,15 +15,44 @@ router.post('/mark', async (req, res) => {
       return res.status(400).json({ error: 'student_id, class_id, and date are required' });
     }
 
-    const id = uuidv4();
-    const time_in = new Date().toISOString();
-
     try {
+      // Check if student exists, if not create them
+      let student;
+      if (process.env.DATABASE_URL) {
+        student = await db.get('SELECT id FROM students WHERE student_id = $1', [student_id]);
+        
+        if (!student) {
+          console.log(`Student ${student_id} not found, creating...`);
+          const newStudentId = uuidv4();
+          await db.run(
+            'INSERT INTO students (id, name, student_id, qr_code) VALUES ($1, $2, $3, $4)',
+            [newStudentId, `Student ${student_id}`, student_id, student_id]
+          );
+          student = { id: newStudentId };
+        }
+      } else {
+        student = await db.get('SELECT id FROM students WHERE student_id = ?', [student_id]);
+        
+        if (!student) {
+          console.log(`Student ${student_id} not found, creating...`);
+          const newStudentId = uuidv4();
+          await db.run(
+            'INSERT INTO students (id, name, student_id, qr_code) VALUES (?, ?, ?, ?)',
+            [newStudentId, `Student ${student_id}`, student_id, student_id]
+          );
+          student = { id: newStudentId };
+        }
+      }
+
+      // Now mark attendance with the student ID
+      const id = uuidv4();
+      const time_in = new Date().toISOString();
+
       if (process.env.DATABASE_URL) {
         console.log('Using PostgreSQL for attendance mark');
         await db.run(
           'INSERT INTO attendance (id, student_id, class_id, date, time_in, status, notes) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-          [id, student_id, class_id, date, time_in, status || 'present', notes]
+          [id, student.id, class_id, date, time_in, status || 'present', notes]
         );
         const record = await db.get('SELECT * FROM attendance WHERE id = $1', [id]);
         res.status(201).json(record);
@@ -31,7 +60,7 @@ router.post('/mark', async (req, res) => {
         console.log('Using SQLite for attendance mark');
         await db.run(
           'INSERT INTO attendance (id, student_id, class_id, date, time_in, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
-          [id, student_id, class_id, date, time_in, status || 'present', notes]
+          [id, student.id, class_id, date, time_in, status || 'present', notes]
         );
         const record = await db.get('SELECT * FROM attendance WHERE id = ?', [id]);
         res.status(201).json(record);
