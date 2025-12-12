@@ -72,7 +72,7 @@ function BulkImport() {
       <div className="bg-white rounded-lg shadow p-4 sm:p-6">
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-4">Import Type</label>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <label className="flex items-center cursor-pointer">
               <input
                 type="radio"
