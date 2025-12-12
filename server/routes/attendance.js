@@ -9,6 +9,8 @@ router.post('/mark', async (req, res) => {
   try {
     const { student_id, class_id, date, status, notes } = req.body;
 
+    console.log('Mark attendance request:', { student_id, class_id, date, status, notes });
+
     if (!student_id || !class_id || !date) {
       return res.status(400).json({ error: 'student_id, class_id, and date are required' });
     }
@@ -16,23 +18,36 @@ router.post('/mark', async (req, res) => {
     const id = uuidv4();
     const time_in = new Date().toISOString();
 
-    if (process.env.DATABASE_URL) {
-      await db.run(
-        'INSERT INTO attendance (id, student_id, class_id, date, time_in, status, notes) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-        [id, student_id, class_id, date, time_in, status || 'present', notes]
-      );
-      const record = await db.get('SELECT * FROM attendance WHERE id = $1', [id]);
-      res.status(201).json(record);
-    } else {
-      await db.run(
-        'INSERT INTO attendance (id, student_id, class_id, date, time_in, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [id, student_id, class_id, date, time_in, status || 'present', notes]
-      );
-      const record = await db.get('SELECT * FROM attendance WHERE id = ?', [id]);
-      res.status(201).json(record);
+    try {
+      if (process.env.DATABASE_URL) {
+        console.log('Using PostgreSQL for attendance mark');
+        await db.run(
+          'INSERT INTO attendance (id, student_id, class_id, date, time_in, status, notes) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+          [id, student_id, class_id, date, time_in, status || 'present', notes]
+        );
+        const record = await db.get('SELECT * FROM attendance WHERE id = $1', [id]);
+        res.status(201).json(record);
+      } else {
+        console.log('Using SQLite for attendance mark');
+        await db.run(
+          'INSERT INTO attendance (id, student_id, class_id, date, time_in, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [id, student_id, class_id, date, time_in, status || 'present', notes]
+        );
+        const record = await db.get('SELECT * FROM attendance WHERE id = ?', [id]);
+        res.status(201).json(record);
+      }
+    } catch (dbErr) {
+      console.error('Database error in mark attendance:', {
+        message: dbErr.message,
+        code: dbErr.code,
+        detail: dbErr.detail,
+        sql: dbErr.sql
+      });
+      throw dbErr;
     }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error marking attendance:', err);
+    res.status(500).json({ error: err.message, details: err.code || 'Unknown error' });
   }
 });
 
