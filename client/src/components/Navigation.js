@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Users, BookOpen, CheckCircle, BarChart3, Home, LogOut, User, Settings, Camera } from 'lucide-react';
+import { Users, BookOpen, CheckCircle, BarChart3, Home, LogOut, User, Settings, Camera, Menu, X } from 'lucide-react';
 import axios from 'axios';
 
 function Navigation({ apiHealth }) {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -19,84 +20,64 @@ function Navigation({ apiHealth }) {
       navigate('/login');
     }
   };
+
+  const navLinks = [
+    { to: '/', icon: Home, label: 'Dashboard' },
+    { to: '/students', icon: Users, label: 'Students' },
+    { to: '/classes', icon: BookOpen, label: 'Classes' },
+    { to: '/attendance', icon: CheckCircle, label: 'Attendance' },
+    { to: '/scanner', icon: Camera, label: 'Scanner' },
+    { to: '/reports', icon: BarChart3, label: 'Reports' },
+  ];
+
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
+    <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2 flex-shrink-0">
             <CheckCircle className="w-6 h-6 text-blue-600" />
-            <span className="text-xl font-bold text-gray-900">Attendance System</span>
+            <span className="text-lg sm:text-xl font-bold text-gray-900 hidden sm:inline">Attendance System</span>
+            <span className="text-lg sm:text-xl font-bold text-gray-900 sm:hidden">Attendance</span>
           </Link>
 
-          <div className="flex items-center gap-8">
-            <Link
-              to="/"
-              className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
-            >
-              <Home className="w-4 h-4" />
-              <span>Dashboard</span>
-            </Link>
-            <Link
-              to="/students"
-              className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
-            >
-              <Users className="w-4 h-4" />
-              <span>Students</span>
-            </Link>
-            <Link
-              to="/classes"
-              className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
-            >
-              <BookOpen className="w-4 h-4" />
-              <span>Classes</span>
-            </Link>
-            <Link
-              to="/attendance"
-              className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
-            >
-              <CheckCircle className="w-4 h-4" />
-              <span>Attendance</span>
-            </Link>
-            <Link
-              to="/scanner"
-              className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
-            >
-              <Camera className="w-4 h-4" />
-              <span>Scanner</span>
-            </Link>
-            <Link
-              to="/reports"
-              className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
-            >
-              <BarChart3 className="w-4 h-4" />
-              <span>Reports</span>
-            </Link>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-6 lg:gap-8">
+            {navLinks.map(({ to, icon: Icon, label }) => (
+              <Link
+                key={to}
+                to={to}
+                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition text-sm lg:text-base"
+              >
+                <Icon className="w-4 h-4" />
+                <span className="hidden lg:inline">{label}</span>
+              </Link>
+            ))}
 
             {user && user.role === 'admin' && (
               <Link
                 to="/users"
-                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
+                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition text-sm lg:text-base"
               >
                 <Settings className="w-4 h-4" />
-                <span>Users</span>
+                <span className="hidden lg:inline">Users</span>
               </Link>
             )}
 
-            <div className="flex items-center gap-4 ml-4 pl-4 border-l border-gray-200">
+            <div className="flex items-center gap-2 lg:gap-4 pl-4 border-l border-gray-200">
               <div className="flex items-center gap-2">
                 <div
                   className={`w-2 h-2 rounded-full ${
                     apiHealth ? 'bg-green-500' : 'bg-red-500'
                   }`}
                 />
-                <span className="text-sm text-gray-600">
+                <span className="text-xs lg:text-sm text-gray-600 hidden lg:inline">
                   {apiHealth ? 'Connected' : 'Offline'}
                 </span>
               </div>
 
               {user && (
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="hidden lg:flex items-center gap-2">
                     <User className="w-4 h-4 text-gray-600" />
                     <span className="text-sm text-gray-700">{user.email}</span>
                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
@@ -114,7 +95,75 @@ function Navigation({ apiHealth }) {
               )}
             </div>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-gray-700 hover:text-blue-600"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
+
+        {/* Mobile Navigation */}
+        {mobileMenuOpen && (
+          <div className="md:hidden pb-4 space-y-2">
+            {navLinks.map(({ to, icon: Icon, label }) => (
+              <Link
+                key={to}
+                to={to}
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition rounded"
+              >
+                <Icon className="w-5 h-5" />
+                <span>{label}</span>
+              </Link>
+            ))}
+
+            {user && user.role === 'admin' && (
+              <Link
+                to="/users"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition rounded"
+              >
+                <Settings className="w-5 h-5" />
+                <span>Users</span>
+              </Link>
+            )}
+
+            <div className="px-4 py-2 border-t border-gray-200 mt-2 pt-2">
+              <div className="flex items-center gap-2 mb-2">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    apiHealth ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                />
+                <span className="text-sm text-gray-600">
+                  {apiHealth ? 'Connected' : 'Offline'}
+                </span>
+              </div>
+              {user && (
+                <div className="flex items-center gap-2 mb-2">
+                  <User className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm text-gray-700">{user.email}</span>
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                    {user.role}
+                  </span>
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 transition rounded"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
