@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, CheckCircle, AlertCircle, Clock, X } from 'lucide-react';
+import { Camera, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import axios from 'axios';
 import QRScanner from '../components/QRScanner';
 

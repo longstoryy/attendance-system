@@ -7,7 +7,6 @@ function Navigation({ apiHealth }) {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   React.useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -160,37 +159,20 @@ function Navigation({ apiHealth }) {
 
                   {/* Mobile Admin Tools */}
                   {user.role === 'admin' && (
-                    <>
-                      <button
-                        onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                        className="w-full flex items-center justify-between px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition rounded mt-2"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Settings className="w-5 h-5" />
-                          <span>Admin Tools</span>
-                        </div>
-                        <ChevronDown className={`w-4 h-4 transition-transform ${userDropdownOpen ? 'rotate-180' : ''}`} />
-                      </button>
-                      
-                      {userDropdownOpen && (
-                        <div className="bg-blue-50 rounded space-y-1 ml-4 mt-1">
-                          {adminNavLinks.map(({ to, icon: Icon, label }) => (
-                            <Link
-                              key={to}
-                              to={to}
-                              onClick={() => {
-                                setMobileMenuOpen(false);
-                                setUserDropdownOpen(false);
-                              }}
-                              className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-blue-100 hover:text-blue-600 transition rounded"
-                            >
-                              <Icon className="w-5 h-5" />
-                              <span>{label}</span>
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </>
+                    <div className="mt-2">
+                      <p className="text-xs text-gray-600 uppercase tracking-wide px-4 py-2">Admin Tools</p>
+                      {adminNavLinks.map(({ to, icon: Icon, label }) => (
+                        <Link
+                          key={to}
+                          to={to}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-blue-100 hover:text-blue-600 transition rounded"
+                        >
+                          <Icon className="w-5 h-5" />
+                          <span>{label}</span>
+                        </Link>
+                      ))}
+                    </div>
                   )}
 
                   {/* Logout Button */}
