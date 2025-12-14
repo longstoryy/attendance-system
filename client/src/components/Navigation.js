@@ -40,6 +40,7 @@ function Navigation({ apiHealth }) {
   const adminNavLinks = [
     { to: '/users', icon: Settings, label: 'Users' },
     { to: '/bulk-import', icon: Users, label: 'Bulk Import' },
+    { to: '/approvals', icon: CheckCircle, label: 'Approvals' },
   ];
 
   return (
