@@ -1,6 +1,7 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = process.env.DATABASE_URL ? require('../database-postgres') : require('../database');
+const { detectLateArrival } = require('../utils/late-arrival-detection');
 
 const router = express.Router();
 
@@ -74,11 +75,21 @@ router.post('/mark', async (req, res) => {
       const id = uuidv4();
       const time_in = new Date().toISOString();
 
+      // Detect late arrival if status not explicitly set
+      let finalStatus = status || 'present';
+      if (!status) {
+        const lateDetection = await detectLateArrival(student.id, class_id, time_in);
+        if (lateDetection.isLate) {
+          finalStatus = 'late';
+          console.log(`Student ${student_id} marked as late:`, lateDetection);
+        }
+      }
+
       if (process.env.DATABASE_URL) {
         console.log('Using PostgreSQL for attendance mark');
         await db.run(
           'INSERT INTO attendance (id, student_id, class_id, date, time_in, status, notes) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-          [id, student.id, class_id, date, time_in, status || 'present', notes]
+          [id, student.id, class_id, date, time_in, finalStatus, notes]
         );
         const record = await db.get('SELECT * FROM attendance WHERE id = $1', [id]);
         res.status(201).json(record);
@@ -86,7 +97,7 @@ router.post('/mark', async (req, res) => {
         console.log('Using SQLite for attendance mark');
         await db.run(
           'INSERT INTO attendance (id, student_id, class_id, date, time_in, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
-          [id, student.id, class_id, date, time_in, status || 'present', notes]
+          [id, student.id, class_id, date, time_in, finalStatus, notes]
         );
         const record = await db.get('SELECT * FROM attendance WHERE id = ?', [id]);
         res.status(201).json(record);
