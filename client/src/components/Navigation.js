@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Users, BookOpen, CheckCircle, BarChart3, Home, LogOut, User, Settings, Camera, Menu, X, ChevronDown } from 'lucide-react';
 import axios from 'axios';
+import NotificationBell from './NotificationBell';
 
 function Navigation({ apiHealth }) {
   const navigate = useNavigate();
@@ -66,8 +67,11 @@ function Navigation({ apiHealth }) {
               </Link>
             ))}
 
+            {/* Notification Bell */}
+            <NotificationBell />
+
             {/* User Profile Dropdown */}
-            <div className="relative group ml-auto">
+            <div className="relative group">
               <button
                 className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition text-sm rounded-lg"
               >
