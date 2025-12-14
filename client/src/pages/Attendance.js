@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Filter } from 'lucide-react';
+import { Plus, Filter, MessageSquare } from 'lucide-react';
 import axios from 'axios';
 import { format } from 'date-fns';
+import ReasonSubmissionModal from '../components/ReasonSubmissionModal';
 
 function Attendance() {
   const [records, setRecords] = useState([]);
@@ -9,6 +10,8 @@ function Attendance() {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showReasonModal, setShowReasonModal] = useState(false);
+  const [selectedAttendance, setSelectedAttendance] = useState(null);
   const [filters, setFilters] = useState({
     student_id: '',
     class_id: '',
@@ -293,6 +296,9 @@ function Attendance() {
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
                     Notes
                   </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -324,11 +330,40 @@ function Attendance() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{record.notes || '-'}</td>
+                    <td className="px-6 py-4 text-sm">
+                      {(record.status === 'late' || record.status === 'absent') && (
+                        <button
+                          onClick={() => {
+                            setSelectedAttendance(record);
+                            setShowReasonModal(true);
+                          }}
+                          className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition text-xs font-medium"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                          Reason
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        )}
+
+        {showReasonModal && selectedAttendance && (
+          <ReasonSubmissionModal
+            attendance={selectedAttendance}
+            onClose={() => {
+              setShowReasonModal(false);
+              setSelectedAttendance(null);
+            }}
+            onSubmit={() => {
+              setShowReasonModal(false);
+              setSelectedAttendance(null);
+              fetchRecords();
+            }}
+          />
         )}
       </div>
     </div>
