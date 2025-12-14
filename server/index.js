@@ -11,6 +11,9 @@ const classRoutes = require('./routes/classes');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const bulkImportRoutes = require('./routes/bulk-import');
+const attendanceReasonsRoutes = require('./routes/attendance-reasons');
+const attendanceApprovalsRoutes = require('./routes/attendance-approvals');
+const notificationsRoutes = require('./routes/notifications');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -42,6 +45,9 @@ app.use('/api/students', studentRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/import', bulkImportRoutes);
+app.use('/api/reasons', attendanceReasonsRoutes);
+app.use('/api/approvals', attendanceApprovalsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
