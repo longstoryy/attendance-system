@@ -42,6 +42,17 @@ function Scanner() {
 
   const handleQRScan = async (qrData) => {
     try {
+      // Validate inputs
+      if (!selectedClass) {
+        setMessage({ type: 'error', text: 'Please select a class first' });
+        return;
+      }
+
+      if (!qrData || qrData.trim().length === 0) {
+        setMessage({ type: 'error', text: 'Invalid QR code' });
+        return;
+      }
+
       // Extract student ID from QR data (could be URL or plain ID)
       let studentId = qrData.trim();
       
@@ -54,8 +65,8 @@ function Scanner() {
         studentId = studentId.split('/').pop();
       }
 
-      if (!selectedClass) {
-        setMessage({ type: 'error', text: 'Please select a class first' });
+      if (!studentId || studentId.length === 0) {
+        setMessage({ type: 'error', text: 'Could not extract student ID from QR code' });
         return;
       }
 
@@ -67,12 +78,16 @@ function Scanner() {
 
       // Mark attendance
       setSyncing(true);
-      const response = await axios.post('/api/attendance/mark', {
+      const attendanceData = {
         student_id: studentId,
         class_id: selectedClass,
         date: new Date().toISOString().split('T')[0],
         status: 'present',
-      });
+      };
+
+      console.log('Sending attendance data:', attendanceData);
+
+      const response = await axios.post('/api/attendance/mark', attendanceData);
 
       // Add to scanned records
       const newRecord = {
@@ -111,17 +126,32 @@ function Scanner() {
 
   const handleSyncOffline = async () => {
     try {
+      if (!selectedClass) {
+        setMessage({ type: 'error', text: 'Please select a class first' });
+        return;
+      }
+
       setSyncing(true);
       const pendingRecords = scannedRecords.filter(r => r.status === 'pending');
 
+      if (pendingRecords.length === 0) {
+        setMessage({ type: 'info', text: 'No pending records to sync' });
+        setSyncing(false);
+        return;
+      }
+
       for (const record of pendingRecords) {
         try {
-          await axios.post('/api/attendance/mark', {
+          const syncData = {
             student_id: record.student_id,
             class_id: selectedClass,
             date: new Date().toISOString().split('T')[0],
             status: 'present',
-          });
+          };
+
+          console.log('Syncing record:', syncData);
+
+          await axios.post('/api/attendance/mark', syncData);
 
           // Update record status
           setScannedRecords(prev =>
