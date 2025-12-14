@@ -68,7 +68,6 @@ function Navigation({ apiHealth }) {
             {/* User Profile Dropdown */}
             <div className="relative group ml-auto">
               <button
-                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                 className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition text-sm rounded-lg"
               >
                 <User className="w-4 h-4" />
